@@ -8,7 +8,8 @@
 	<script>
    
 </script>
-<script src="https://cdn.jsdelivr.net/npm/gif.js/dist/gif.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
     <style>
         body {
             margin: 0;
@@ -138,7 +139,7 @@
             star.style.animationDelay = `${Math.random() * 2}s`;
             document.body.appendChild(star);
         }
-
+    
         // Generar GIF animado
         async function generateGIF() {
             const nombre = document.getElementById('nombre').value;
@@ -146,29 +147,30 @@
                 alert("¡Por favor, escribe tu nombre!");
                 return;
             }
-
+    
             const card = document.getElementById('invitation-card');
             const gif = new GIF({
+                workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js',
                 workers: 2,
                 quality: 10,
                 width: card.offsetWidth,
                 height: card.offsetHeight,
             });
-
+    
             // Capturar 10 frames para el GIF
             for (let i = 0; i < 10; i++) {
                 await new Promise(resolve => setTimeout(resolve, 200));
                 const canvas = await html2canvas(card);
                 gif.addFrame(canvas, { delay: 100 });
             }
-
+    
             gif.on('finished', (blob) => {
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 link.download = `Invitacion_${nombre}.gif`;
                 link.click();
             });
-
+    
             gif.render();
         }
     </script>
