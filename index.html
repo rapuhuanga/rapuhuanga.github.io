@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invitación Animada</title>
+    <title>Te invitamos</title>
+    <link rel="icon" href="https://www.freefavicon.com/freefavicons/objects/lightning-bolt-152-249343.ico" type="image/x-icon">
     <script src="scripts/html2canvas.min.js"></script>
 	<script>
    
@@ -130,7 +131,7 @@
     </div>
 
     <script>
-        // Crear estrellas animadas (igual que antes)
+        // Crear estrellas animadas
         for (let i = 0; i < 50; i++) {
             const star = document.createElement('div');
             star.classList.add('star');
@@ -140,7 +141,7 @@
             document.body.appendChild(star);
         }
     
-        // Generar GIF animado (VERSIÓN FUNCIONANDO)
+        // Generar GIF animado (VERSIÓN QUE FUNCIONA)
         async function generateGIF() {
             const nombre = document.getElementById('nombre').value;
             if (!nombre) {
@@ -157,21 +158,15 @@
                 height: card.offsetHeight,
             });
     
-            // 🔥 Ajustes clave:
-            // 1. Más frames (20 en lugar de 10)
-            // 2. Mayor delay entre frames (300ms)
-            // 3. Forzar repaint para capturar animaciones CSS
-            for (let i = 0; i < 20; i++) {
-                await new Promise(resolve => {
-                    // Fuerza un repaint para capturar el frame actual de la animación
-                    card.style.transform = 'translateZ(0)';
-                    setTimeout(() => {
-                        html2canvas(card).then(canvas => {
-                            gif.addFrame(canvas, { delay: 50 }); // Delay entre frames en el GIF
-                            resolve();
-                        });
-                    }, 300); // Tiempo entre capturas (300ms)
-                });
+            // 1. Aumentamos el número de frames a 30
+            // 2. Capturamos en diferentes puntos de la animación
+            const totalFrames = 30;
+            const animationDuration = 3000; // 3 segundos (duración de tus animaciones CSS)
+            
+            for (let i = 0; i < totalFrames; i++) {
+                // Calculamos el punto exacto de la animación a capturar
+                const progress = i / totalFrames;
+                await captureFrameAtProgress(progress, animationDuration, card, gif);
             }
     
             gif.on('finished', (blob) => {
@@ -182,6 +177,26 @@
             });
     
             gif.render();
+        }
+    
+        // Función para capturar un frame en un punto específico de la animación
+        async function captureFrameAtProgress(progress, duration, element, gif) {
+            return new Promise(resolve => {
+                // 1. Forzamos un repaint para sincronizar las animaciones
+                void element.offsetWidth;
+                
+                // 2. Usamos requestAnimationFrame para sincronizar con el refresco de pantalla
+                requestAnimationFrame(() => {
+                    // 3. Capturamos el frame
+                    html2canvas(element).then(canvas => {
+                        gif.addFrame(canvas, { delay: duration / totalFrames });
+                        resolve();
+                    });
+                });
+                
+                // Pequeño delay entre frames
+                setTimeout(resolve, 50);
+            });
         }
     </script>
 </body>
