@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Te invitamos</title>
+    <title>Invitación Animada</title>
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" type="image/x-icon">
     <script src="scripts/html2canvas.min.js"></script>
     <script src="scripts/gif.js"></script>
@@ -118,27 +118,24 @@
             0% { opacity: 0.3; transform: scale(0.7); }
             100% { opacity: 1; transform: scale(1.3); }
         }
-
-        .hide-in-gif {
-            display: none !important;
-        }
         
         .download-btn {
             position: fixed;
             padding: 12px 25px;
-            background-color: #ff6f61;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             z-index: 100;
             font-size: 14px;
+            font-weight: bold;
         }
         
         #download-gif {
             bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
+            background-color: #ff6f61;
         }
         
         #download-mp4 {
@@ -146,6 +143,22 @@
             left: 50%;
             transform: translateX(-50%);
             background-color: #25D366;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            z-index: 1000;
+            display: none;
         }
     </style>
 </head>
@@ -164,8 +177,10 @@
         <input type="text" id="nombre" placeholder="Escribe tu nombre">
     </div>
 
-    <button id="download-gif" class="download-btn" onclick="generateGIF()">Generar Invitación (GIF)</button>
-    <button id="download-mp4" class="download-btn" onclick="generateMP4()">Generar Invitación (MP4)</button>
+    <div class="loading" id="loading">Generando, por favor espera...</div>
+
+    <button id="download-gif" class="download-btn" onclick="generateGIF()">Generar GIF</button>
+    <button id="download-mp4" class="download-btn" onclick="generateMP4()">Generar MP4 (WhatsApp)</button>
 
     <script>
         // Crear estrellas animadas
@@ -178,7 +193,12 @@
             document.body.appendChild(star);
         }
 
-        // Función optimizada para generar GIF
+        // Mostrar/ocultar carga
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        // Función para generar GIF
         async function generateGIF() {
             const nombre = document.getElementById('nombre').value;
             if (!nombre) {
@@ -188,53 +208,57 @@
 
             const btn = document.getElementById('download-gif');
             btn.disabled = true;
-            btn.textContent = "Generando GIF...";
+            showLoading(true);
 
-            const card = document.getElementById('invitation-card');
-            
-            // Configuración del GIF
-            const gif = new GIF({
-                workers: 2,
-                quality: 10,
-                width: card.offsetWidth,
-                height: card.offsetHeight,
-                workerScript: 'scripts/gif.worker.js',
-                repeat: 0
-            });
-
-            // Capturar 20 frames para mejor animación
-            for (let i = 0; i < 20; i++) {
-                await new Promise(resolve => {
-                    // Forzar sincronización de animaciones
-                    void card.offsetWidth;
-                    
-                    setTimeout(async () => {
-                        const canvas = await html2canvas(card, {
-                            scale: 1,
-                            logging: false,
-                            useCORS: true,
-                            backgroundColor: null,
-                            ignoreElements: (el) => el.id === 'download-gif' || el.id === 'download-mp4'
-                        });
-                        gif.addFrame(canvas, { delay: 100 });
-                        resolve();
-                    }, 50);
-                });
-                await new Promise(r => setTimeout(r, 100));
-            }
-
-            gif.on('finished', blob => {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `Invitacion_${nombre}.gif`;
-                link.click();
+            try {
+                const card = document.getElementById('invitation-card');
                 
+                const gif = new GIF({
+                    workers: 2,
+                    quality: 10,
+                    width: card.offsetWidth,
+                    height: card.offsetHeight,
+                    workerScript: 'scripts/gif.worker.js',
+                    repeat: 0
+                });
+
+                // Capturar 15 frames para evitar sobrecarga
+                for (let i = 0; i < 15; i++) {
+                    await new Promise(resolve => {
+                        void card.offsetWidth;
+                        
+                        setTimeout(async () => {
+                            const canvas = await html2canvas(card, {
+                                scale: 0.8,
+                                logging: false,
+                                useCORS: true,
+                                backgroundColor: null,
+                                ignoreElements: (el) => el.classList.contains('download-btn')
+                            });
+                            gif.addFrame(canvas, { delay: 100 });
+                            resolve();
+                        }, 50);
+                    });
+                    await new Promise(r => setTimeout(r, 150));
+                }
+
+                gif.on('finished', blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `Invitacion_${nombre}.gif`;
+                    link.click();
+                }).render();
+
+            } catch (error) {
+                console.error("Error al generar GIF:", error);
+                alert("Ocurrió un error al generar el GIF");
+            } finally {
                 btn.disabled = false;
-                btn.textContent = "Generar Invitación (GIF)";
-            }).render();
+                showLoading(false);
+            }
         }
 
-        // Función para generar MP4
+        // Función optimizada para generar MP4
         async function generateMP4() {
             const nombre = document.getElementById('nombre').value;
             if (!nombre) {
@@ -244,67 +268,88 @@
 
             const btn = document.getElementById('download-mp4');
             btn.disabled = true;
-            btn.textContent = "Generando MP4...";
+            showLoading(true);
 
-            const card = document.getElementById('invitation-card');
-            const { createFFmpeg, fetchFile } = FFmpeg;
-            const ffmpeg = createFFmpeg({ log: true });
-            
-            // 1. Capturar frames
-            const frames = [];
-            
-            for(let i = 0; i < 30; i++) {
-                await new Promise(resolve => {
-                    void card.offsetWidth; // Forzar reflow
-                    
-                    setTimeout(async () => {
-                        const canvas = await html2canvas(card, {
-                            scale: 1,
-                            logging: false,
-                            backgroundColor: null,
-                            ignoreElements: (el) => el.id === 'download-gif' || el.id === 'download-mp4'
-                        });
-                        frames.push(canvas.toDataURL('image/png'));
-                        resolve();
-                    }, 50);
+            try {
+                const card = document.getElementById('invitation-card');
+                const { createFFmpeg, fetchFile } = FFmpeg;
+                
+                // Configuración ligera de FFmpeg
+                const ffmpeg = createFFmpeg({ 
+                    log: true,
+                    corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
                 });
-                await new Promise(r => setTimeout(r, 100));
+
+                // 1. Capturar frames optimizados
+                const frames = [];
+                const totalFrames = 12; // Reducido para WhatsApp
+                
+                for(let i = 0; i < totalFrames; i++) {
+                    await new Promise(resolve => {
+                        void card.offsetWidth;
+                        setTimeout(async () => {
+                            const canvas = await html2canvas(card, {
+                                scale: 0.7, // Escala reducida
+                                logging: false,
+                                useCORS: true,
+                                backgroundColor: null,
+                                ignoreElements: (el) => el.classList.contains('download-btn')
+                            });
+                            
+                            // Convertir a JPEG con calidad media
+                            frames.push(canvas.toDataURL('image/jpeg', 0.6));
+                            resolve();
+                        }, 50);
+                    });
+                    await new Promise(r => setTimeout(r, 200));
+                }
+
+                // 2. Cargar FFmpeg
+                if (!ffmpeg.isLoaded()) {
+                    await ffmpeg.load();
+                }
+
+                // 3. Procesar frames en lotes
+                for (let i = 0; i < frames.length; i++) {
+                    const frameData = await fetchFile(frames[i]);
+                    ffmpeg.FS('writeFile', `frame${i.toString().padStart(3, '0')}.jpg`, frameData);
+                }
+
+                // 4. Configuración ultra optimizada
+                await ffmpeg.run(
+                    '-framerate', '8',           // FPS reducido
+                    '-i', 'frame%03d.jpg',
+                    '-c:v', 'libx264',
+                    '-pix_fmt', 'yuv420p',
+                    '-vf', 'scale=480:-2',      // Resolución media
+                    '-preset', 'ultrafast',
+                    '-crf', '30',                // Máxima compresión
+                    '-fs', '1M',                 // Limitar a 1MB
+                    '-loop', '0',
+                    'output.mp4'
+                );
+
+                // 5. Descargar el resultado
+                const data = ffmpeg.FS('readFile', 'output.mp4');
+                const blob = new Blob([data.buffer], { type: 'video/mp4' });
+                
+                if (blob.size > 3 * 1024 * 1024) {
+                    alert("El video es demasiado grande para WhatsApp. Se descargará igual.");
+                }
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Invitacion_${nombre}.mp4`;
+                a.click();
+
+            } catch (error) {
+                console.error("Error al generar MP4:", error);
+                alert("Error al generar el video. Intenta con menos frames.");
+            } finally {
+                btn.disabled = false;
+                showLoading(false);
             }
-            
-            // 2. Convertir a video
-            if (!ffmpeg.isLoaded()) {
-                await ffmpeg.load();
-            }
-            
-            // Subir cada frame
-            for (let i = 0; i < frames.length; i++) {
-                const frameName = `frame${i.toString().padStart(3, '0')}.png`;
-                ffmpeg.FS('writeFile', frameName, await fetchFile(frames[i]));
-            }
-            
-            // Ejecutar FFmpeg
-            await ffmpeg.run(
-                '-framerate', '15',
-                '-i', 'frame%03d.png',
-                '-c:v', 'libx264',
-                '-pix_fmt', 'yuv420p',
-                '-vf', `scale=${card.offsetWidth}:${card.offsetHeight}`,
-                '-loop', '1',
-                '-r', '15',
-                '-fs', '2M', // Limitar a 2MB
-                'output.mp4'
-            );
-            
-            // Descargar
-            const data = ffmpeg.FS('readFile', 'output.mp4');
-            const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Invitacion_${nombre}.mp4`;
-            a.click();
-            
-            btn.disabled = false;
-            btn.textContent = "Generar Invitación (MP4)";
         }
     </script>
 </body>
