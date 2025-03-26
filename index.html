@@ -6,6 +6,7 @@
     <title>Invitación Animada</title>
     <script src="scripts/html2canvas.min.js"></script>
     <script src="scripts/gif.js"></script>
+    <script src="scripts/gif.worker.js"></script>
     <style>
         body {
             margin: 0;
@@ -91,6 +92,16 @@
             }
         }
 
+        input {
+            padding: 10px;
+            width: 80%;
+            margin: 10px 0;
+            border: 2px solid #ff6f61;
+            border-radius: 8px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
         .star {
             position: absolute;
             width: 3px;
@@ -109,6 +120,20 @@
         .hide-in-gif {
             display: none !important;
         }
+        
+        #download-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
@@ -122,9 +147,11 @@
             <img src="https://cdn-icons-png.flaticon.com/512/3069/3069172.png" class="animal" alt="Tigre" style="animation-delay: 0.4s;">
             <img src="https://cdn-icons-png.flaticon.com/512/10983/10983479.png" class="animal" alt="Tortuga" style="animation-delay: 0.6s;">
         </div>
+        
+        <input type="text" id="nombre" placeholder="Escribe tu nombre">
     </div>
 
-    <button id="download-btn" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 25px; background-color: #ff6f61; color: white; border: none; border-radius: 8px; cursor: pointer; z-index: 100;" onclick="generateGIF()">Generar Invitación</button>
+    <button id="download-btn" onclick="generateGIF()">Generar Invitación</button>
 
     <script>
         // Crear estrellas animadas
@@ -137,26 +164,32 @@
             document.body.appendChild(star);
         }
 
-        // Función optimizada para WhatsApp
+        // Función optimizada para generar GIF
         async function generateGIF() {
+            const nombre = document.getElementById('nombre').value;
+            if (!nombre) {
+                alert("Por favor, escribe tu nombre");
+                return;
+            }
+
             const btn = document.getElementById('download-btn');
             btn.classList.add('hide-in-gif');
             btn.textContent = "Generando GIF...";
 
             const card = document.getElementById('invitation-card');
             
-            // Configuración para WhatsApp (tamaño pequeño y bajo peso)
+            // Configuración del GIF
             const gif = new GIF({
                 workers: 2,
-                quality: 5,  // Calidad baja para reducir peso
-                width: 300,  // WhatsApp recomienda máximo 640px
-                height: 400,
+                quality: 10,
+                width: card.offsetWidth,
+                height: card.offsetHeight,
                 workerScript: 'scripts/gif.worker.js',
-                repeat: 0    // 0 = loop infinito
+                repeat: 0
             });
 
-            // Capturar 15 frames (suficiente para WhatsApp)
-            for (let i = 0; i < 15; i++) {
+            // Capturar 20 frames para mejor animación
+            for (let i = 0; i < 20; i++) {
                 await new Promise(resolve => {
                     // Forzar sincronización de animaciones
                     void card.offsetWidth;
@@ -169,25 +202,21 @@
                             backgroundColor: null,
                             ignoreElements: (el) => el.id === 'download-btn'
                         });
-                        gif.addFrame(canvas, { delay: 100 }); // 100ms entre frames
+                        gif.addFrame(canvas, { delay: 100 });
                         resolve();
                     }, 50);
                 });
-                await new Promise(r => setTimeout(r, 120));
+                await new Promise(r => setTimeout(r, 100));
             }
 
             gif.on('finished', blob => {
-                // Crear versión optimizada para WhatsApp
-                const optimizedBlob = new Blob([blob], { type: 'image/gif' });
-                
                 const link = document.createElement('a');
-                link.href = URL.createObjectURL(optimizedBlob);
-                link.download = 'Invitacion_WhatsApp.gif';
+                link.href = URL.createObjectURL(blob);
+                link.download = `Invitacion_${nombre}.gif`;
                 link.click();
                 
                 btn.classList.remove('hide-in-gif');
-                btn.textContent = "¡GIF Listo!";
-                setTimeout(() => btn.textContent = "Generar Invitación", 2000);
+                btn.textContent = "Generar Invitación";
             }).render();
         }
     </script>
