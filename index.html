@@ -8,6 +8,7 @@
     <script src="scripts/html2canvas.min.js"></script>
     <script src="scripts/gif.js"></script>
     <script src="scripts/gif.worker.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -122,11 +123,8 @@
             display: none !important;
         }
         
-        #download-btn {
+        .download-btn {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
             padding: 12px 25px;
             background-color: #ff6f61;
             color: white;
@@ -134,6 +132,20 @@
             border-radius: 8px;
             cursor: pointer;
             z-index: 100;
+            font-size: 14px;
+        }
+        
+        #download-gif {
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        #download-mp4 {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #25D366;
         }
     </style>
 </head>
@@ -152,7 +164,8 @@
         <input type="text" id="nombre" placeholder="Escribe tu nombre">
     </div>
 
-    <button id="download-btn" onclick="generateGIF()">Generar Invitación</button>
+    <button id="download-gif" class="download-btn" onclick="generateGIF()">Generar Invitación (GIF)</button>
+    <button id="download-mp4" class="download-btn" onclick="generateMP4()">Generar Invitación (MP4)</button>
 
     <script>
         // Crear estrellas animadas
@@ -173,8 +186,8 @@
                 return;
             }
 
-            const btn = document.getElementById('download-btn');
-            btn.classList.add('hide-in-gif');
+            const btn = document.getElementById('download-gif');
+            btn.disabled = true;
             btn.textContent = "Generando GIF...";
 
             const card = document.getElementById('invitation-card');
@@ -201,7 +214,7 @@
                             logging: false,
                             useCORS: true,
                             backgroundColor: null,
-                            ignoreElements: (el) => el.id === 'download-btn'
+                            ignoreElements: (el) => el.id === 'download-gif' || el.id === 'download-mp4'
                         });
                         gif.addFrame(canvas, { delay: 100 });
                         resolve();
@@ -216,9 +229,82 @@
                 link.download = `Invitacion_${nombre}.gif`;
                 link.click();
                 
-                btn.classList.remove('hide-in-gif');
-                btn.textContent = "Generar Invitación";
+                btn.disabled = false;
+                btn.textContent = "Generar Invitación (GIF)";
             }).render();
+        }
+
+        // Función para generar MP4
+        async function generateMP4() {
+            const nombre = document.getElementById('nombre').value;
+            if (!nombre) {
+                alert("Por favor, escribe tu nombre");
+                return;
+            }
+
+            const btn = document.getElementById('download-mp4');
+            btn.disabled = true;
+            btn.textContent = "Generando MP4...";
+
+            const card = document.getElementById('invitation-card');
+            const { createFFmpeg, fetchFile } = FFmpeg;
+            const ffmpeg = createFFmpeg({ log: true });
+            
+            // 1. Capturar frames
+            const frames = [];
+            
+            for(let i = 0; i < 30; i++) {
+                await new Promise(resolve => {
+                    void card.offsetWidth; // Forzar reflow
+                    
+                    setTimeout(async () => {
+                        const canvas = await html2canvas(card, {
+                            scale: 1,
+                            logging: false,
+                            backgroundColor: null,
+                            ignoreElements: (el) => el.id === 'download-gif' || el.id === 'download-mp4'
+                        });
+                        frames.push(canvas.toDataURL('image/png'));
+                        resolve();
+                    }, 50);
+                });
+                await new Promise(r => setTimeout(r, 100));
+            }
+            
+            // 2. Convertir a video
+            if (!ffmpeg.isLoaded()) {
+                await ffmpeg.load();
+            }
+            
+            // Subir cada frame
+            for (let i = 0; i < frames.length; i++) {
+                const frameName = `frame${i.toString().padStart(3, '0')}.png`;
+                ffmpeg.FS('writeFile', frameName, await fetchFile(frames[i]));
+            }
+            
+            // Ejecutar FFmpeg
+            await ffmpeg.run(
+                '-framerate', '15',
+                '-i', 'frame%03d.png',
+                '-c:v', 'libx264',
+                '-pix_fmt', 'yuv420p',
+                '-vf', `scale=${card.offsetWidth}:${card.offsetHeight}`,
+                '-loop', '1',
+                '-r', '15',
+                '-fs', '2M', // Limitar a 2MB
+                'output.mp4'
+            );
+            
+            // Descargar
+            const data = ffmpeg.FS('readFile', 'output.mp4');
+            const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Invitacion_${nombre}.mp4`;
+            a.click();
+            
+            btn.disabled = false;
+            btn.textContent = "Generar Invitación (MP4)";
         }
     </script>
 </body>
