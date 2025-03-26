@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitación Animada</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+	<script>
+    // Soluciona el problema del Worker en local
+    if (window.Worker) {
+        window.GIFWorker = new Worker("https://cdn.jsdelivr.net/npm/gif.js/dist/gif.worker.js");
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gif.js/dist/gif.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fbc2eb, #a6c1ee, #f6d365, #fda085);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            overflow: hidden;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #ff6f61;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .animals {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .animal {
+            width: 80px;
+            height: 80px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        input {
+            padding: 12px;
+            width: 80%;
+            margin: 10px 0;
+            border: 2px solid #ff6f61;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        button {
+            padding: 12px 25px;
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background-color: #ff3b2f;
+            transform: scale(1.05);
+        }
+
+        .star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card" id="invitation-card">
+        <h1>¡Estás Invitado!</h1>
+        <p>¡Ven a celebrar con nosotros un cumpleaños lleno de diversión!</p>
+        
+        <div class="animals">
+            <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" class="animal" alt="Girafa" style="animation-delay: 0s;">
+            <img src="https://cdn-icons-png.flaticon.com/512/616/616430.png" class="animal" alt="León" style="animation-delay: 0.5s;">
+            <img src="https://cdn-icons-png.flaticon.com/512/3069/3069172.png" class="animal" alt="Tigre" style="animation-delay: 1s;">
+            <img src="https://cdn-icons-png.flaticon.com/512/3069/3069196.png" class="animal" alt="Tortuga" style="animation-delay: 1.5s;">
+        </div>
+
+        <input type="text" id="nombre" placeholder="Escribe tu nombre">
+        <button onclick="generateGIF()">Descargar Invitación</button>
+    </div>
+
+    <script>
+        // Crear estrellas animadas
+        for (let i = 0; i < 50; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.top = `${Math.random() * 100}vh`;
+            star.style.animationDelay = `${Math.random() * 2}s`;
+            document.body.appendChild(star);
+        }
+
+        // Generar GIF animado
+        async function generateGIF() {
+            const nombre = document.getElementById('nombre').value;
+            if (!nombre) {
+                alert("¡Por favor, escribe tu nombre!");
+                return;
+            }
+
+            const card = document.getElementById('invitation-card');
+            const gif = new GIF({
+                workers: 2,
+                quality: 10,
+                width: card.offsetWidth,
+                height: card.offsetHeight,
+            });
+
+            // Capturar 10 frames para el GIF
+            for (let i = 0; i < 10; i++) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                const canvas = await html2canvas(card);
+                gif.addFrame(canvas, { delay: 100 });
+            }
+
+            gif.on('finished', (blob) => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Invitacion_${nombre}.gif`;
+                link.click();
+            });
+
+            gif.render();
+        }
+    </script>
+</body>
+</html>
