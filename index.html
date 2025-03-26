@@ -131,7 +131,7 @@
     </div>
 
     <script>
-        // Crear estrellas animadas
+        // Configuración inicial (estrellas animadas)
         for (let i = 0; i < 50; i++) {
             const star = document.createElement('div');
             star.classList.add('star');
@@ -141,52 +141,54 @@
             document.body.appendChild(star);
         }
     
-        // Generar GIF animado (VERSIÓN CORREGIDA)
         async function generateGIF() {
             const nombre = document.getElementById('nombre').value;
-            if (!nombre) {
-                alert("¡Por favor, escribe tu nombre!");
-                return;
-            }
-    
+            if (!nombre) return alert("¡Escribe tu nombre!");
+            
             const card = document.getElementById('invitation-card');
             const gif = new GIF({
                 workerScript: 'scripts/gif.worker.js',
-                workers: 2,
-                quality: 10,
+                workers: 4,  // Aumentamos workers para mejor rendimiento
+                quality: 15, // Calidad media (1-20)
                 width: card.offsetWidth,
-                height: card.offsetHeight,
+                height: card.offsetHeight
             });
     
-            // Parámetros ajustados para capturar la animación
-            const totalFrames = 20; // Reducido a 15 frames para mejor rendimiento
-            const frameDelay = 50; // 100ms entre frames (GIF resultante: ~1.5s de duración)
+            // 1. Configuración optimizada
+            const totalFrames = 24; // 24 frames = 2 segundos (fluido)
+            const captureInterval = 80; // ms entre capturas
             
-            for (let i = 0; i < totalFrames; i++) {
-                await new Promise(resolve => {
-                    // 1. Forzar reflow/repaint para sincronizar animaciones
-                    void card.offsetWidth;
+            // 2. Función mejorada para capturar frames
+            const captureFrame = async () => {
+                return new Promise(resolve => {
+                    // Forzar sincronización de animaciones
+                    void card.offsetWidth; // Trigger reflow
                     
-                    // 2. Capturar frame sincronizado con la animación
-                    requestAnimationFrame(async () => {
-                        const canvas = await html2canvas(card);
-                        gif.addFrame(canvas, { delay: frameDelay });
-                        resolve();
-                    });
-                    
-                    // 3. Pequeña pausa entre capturas
-                    setTimeout(resolve, 200);
+                    setTimeout(async () => {
+                        const canvas = await html2canvas(card, {
+                            logging: false,
+                            useCORS: true,
+                            scale: 1 // Evitar escalado que afecta animaciones
+                        });
+                        resolve(canvas);
+                    }, 50); // Pequeño delay para sincronización
                 });
+            };
+    
+            // 3. Captura progresiva
+            for (let i = 0; i < totalFrames; i++) {
+                const canvas = await captureFrame();
+                gif.addFrame(canvas, { delay: captureInterval });
+                await new Promise(r => setTimeout(r, captureInterval));
             }
     
-            gif.on('finished', (blob) => {
+            // 4. Generar GIF
+            gif.on('finished', blob => {
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 link.download = `Invitacion_${nombre}.gif`;
                 link.click();
-            });
-    
-            gif.render();
+            }).render();
         }
     </script>
 </body>
