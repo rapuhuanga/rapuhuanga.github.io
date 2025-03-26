@@ -130,7 +130,7 @@
     </div>
 
     <script>
-        // Crear estrellas animadas
+        // Crear estrellas animadas (igual que antes)
         for (let i = 0; i < 50; i++) {
             const star = document.createElement('div');
             star.classList.add('star');
@@ -140,7 +140,7 @@
             document.body.appendChild(star);
         }
     
-        // Generar GIF animado
+        // Generar GIF animado (VERSIÓN FUNCIONANDO)
         async function generateGIF() {
             const nombre = document.getElementById('nombre').value;
             if (!nombre) {
@@ -157,11 +157,21 @@
                 height: card.offsetHeight,
             });
     
-            // Capturar 10 frames para el GIF
-            for (let i = 0; i < 10; i++) {
-                await new Promise(resolve => setTimeout(resolve, 200));
-                const canvas = await html2canvas(card);
-                gif.addFrame(canvas, { delay: 100 });
+            // 🔥 Ajustes clave:
+            // 1. Más frames (20 en lugar de 10)
+            // 2. Mayor delay entre frames (300ms)
+            // 3. Forzar repaint para capturar animaciones CSS
+            for (let i = 0; i < 20; i++) {
+                await new Promise(resolve => {
+                    // Fuerza un repaint para capturar el frame actual de la animación
+                    card.style.transform = 'translateZ(0)';
+                    setTimeout(() => {
+                        html2canvas(card).then(canvas => {
+                            gif.addFrame(canvas, { delay: 50 }); // Delay entre frames en el GIF
+                            resolve();
+                        });
+                    }, 300); // Tiempo entre capturas (300ms)
+                });
             }
     
             gif.on('finished', (blob) => {
