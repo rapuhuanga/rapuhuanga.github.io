@@ -193,6 +193,9 @@
             text-decoration: underline;
             font-style: italic;
         }
+        .no-export {
+            /* Esta clase se usa para elementos que no deben aparecer en la exportación */
+        }
     </style>
 </head>
 <body>
@@ -208,7 +211,7 @@
             <img src="https://cdn-icons-png.flaticon.com/512/3069/3069172.png" class="animal" alt="Tigre" style="animation-delay: 0.4s;">
             <img src="https://cdn-icons-png.flaticon.com/512/10983/10983479.png" class="animal" alt="Tortuga" style="animation-delay: 0.6s;">
         </div>        
-        <div class="name-container">
+        <div class="name-container no-export">
             <div class="name-label">Escribe tu nombre:</div>
             <input type="text" id="nombre" class="name-input" placeholder="Tu nombre aquí">
         </div>
@@ -272,6 +275,9 @@
             try {
                 const card = document.getElementById('invitation-card');
                 
+                // Ocultar elementos que no deben exportarse
+                document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
+                
                 const gif = new GIF({
                     workers: 2,
                     quality: 10,
@@ -293,7 +299,7 @@
                                 logging: false,
                                 useCORS: true,
                                 backgroundColor: null,
-                                ignoreElements: (el) => el.classList.contains('download-btn'),
+                                ignoreElements: (el) => el.classList.contains('download-btn') || el.classList.contains('no-export'),
                                 windowWidth: card.offsetWidth,
                                 windowHeight: card.offsetHeight,
                                 x: 0,
@@ -325,11 +331,16 @@
                     link.href = URL.createObjectURL(blob);
                     link.download = `Invitacion_${nombre}.gif`;
                     link.click();
+                    
+                    // Mostrar nuevamente los elementos ocultos
+                    document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
                 }).render();
 
             } catch (error) {
                 console.error("Error al generar GIF:", error);
                 alert("Ocurrió un error al generar el GIF. Intenta de nuevo.");
+                // Asegurarse de mostrar los elementos ocultos incluso si hay error
+                document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
             } finally {
                 btn.disabled = false;
                 showLoading(false);
@@ -350,6 +361,9 @@
             try {
                 const card = document.getElementById('invitation-card');
                 const { createFFmpeg, fetchFile } = FFmpeg;
+                
+                // Ocultar elementos que no deben exportarse
+                document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
                 
                 // Configuración de FFmpeg
                 const ffmpeg = createFFmpeg({ 
@@ -386,7 +400,7 @@
                                         logging: false,
                                         useCORS: true,
                                         backgroundColor: null,
-                                        ignoreElements: (el) => el.classList.contains('download-btn'),
+                                        ignoreElements: (el) => el.classList.contains('download-btn') || el.classList.contains('no-export'),
                                         windowWidth: card.offsetWidth,
                                         windowHeight: card.offsetHeight,
                                         x: 0,
@@ -466,6 +480,8 @@
                 console.error("Error al generar MP4:", error);
                 alert("No se pudo generar el video MP4. Intenta en otro dispositivo o reduce la complejidad de la animación.");
             } finally {
+                // Mostrar nuevamente los elementos ocultos
+                document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
                 btn.disabled = false;
                 showLoading(false);
             }
