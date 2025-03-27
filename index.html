@@ -24,13 +24,11 @@
             overflow: hidden;
             font-family: 'Comic Sans MS', cursive, sans-serif;
         }
-
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
         .card {
             background: rgba(255, 255, 255, 0.9);
             padding: 25px;
@@ -41,45 +39,38 @@
             position: relative;
             z-index: 1;
         }
-
         h1 {
             font-size: 2em;
             color: #ff6f61;
             margin-bottom: 10px;
             animation: pulse 1.2s infinite alternate;
         }
-
         @keyframes pulse {
             0% { transform: scale(1); }
             100% { transform: scale(1.08); }
         }
-
         p {
             font-size: 1.1em;
             color: #555;
             margin-bottom: 15px;
             animation: floatText 2.5s ease-in-out infinite;
         }
-
         @keyframes floatText {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-8px); }
         }
-
         .animals {
             display: flex;
             justify-content: center;
             gap: 15px;
             margin: 20px 0;
         }
-
         .animal {
             width: 70px;
             height: 70px;
             animation: float 2.5s ease-in-out infinite;
             filter: drop-shadow(0 8px 5px rgba(0,0,0,0.2));
         }
-
         @keyframes float {
             0%, 100% { 
                 transform: translateY(0) rotate(0deg) scale(1);
@@ -94,17 +85,38 @@
                 transform: translateY(-20px) rotate(7deg) scale(1.1);
             }
         }
-
-        input {
-            padding: 10px;
-            width: 80%;
-            margin: 10px 0;
-            border: 2px solid #ff6f61;
-            border-radius: 8px;
-            font-size: 1em;
-            background: rgba(255, 255, 255, 0.8);
+        .name-container {
+            position: relative;
+            margin: 20px 0;
         }
-
+        .name-label {
+            font-family: 'Brush Script MT', cursive;
+            font-size: 1.3em;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .name-input {
+            font-family: 'Brush Script MT', cursive;
+            padding: 8px;
+            width: 80%;
+            margin: 0 auto;
+            border: none;
+            border-bottom: 1px dashed #ff6f61;
+            border-radius: 0;
+            font-size: 1.2em;
+            background: transparent;
+            text-align: center;
+            color: #555;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .name-input:focus {
+            border-bottom: 1px solid #ff6f61;
+        }
+        .name-input::placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
         .star {
             position: absolute;
             width: 3px;
@@ -114,12 +126,10 @@
             animation: twinkle 1.8s infinite alternate;
             box-shadow: 0 0 8px 1px rgba(255, 255, 255, 0.7);
         }
-
         @keyframes twinkle {
             0% { opacity: 0.3; transform: scale(0.7); }
             100% { opacity: 1; transform: scale(1.3); }
-        }
-        
+        }        
         .download-btn {
             position: fixed;
             padding: 12px 25px;
@@ -132,18 +142,15 @@
             font-weight: bold;
             transform: translateX(-50%);
             left: 50%;
-        }
-        
+        }        
         #download-gif {
             bottom: 80px;
             background-color: #ff6f61;
-        }
-        
+        }        
         #download-mp4 {
             bottom: 20px;
             background-color: #25D366;
-        }
-        
+        }        
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -157,8 +164,7 @@
             z-index: 1000;
             flex-direction: column;
             color: white;
-        }
-        
+        }        
         .progress-bar {
             width: 80%;
             max-width: 300px;
@@ -167,34 +173,48 @@
             border-radius: 10px;
             margin-top: 20px;
             overflow: hidden;
-        }
-        
+        }        
         .progress {
             height: 100%;
             background: #25D366;
             width: 0%;
             transition: width 0.3s;
         }
+        .invitation-text {
+            font-family: 'Brush Script MT', cursive;
+            font-size: 1.2em;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        .highlight-name {
+            color: #ff6f61;
+            font-weight: bold;
+            text-decoration: underline;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <div class="card" id="invitation-card">
         <h1>¡Estás Invitado!</h1>
-        <p>¡Ven a celebrar con nosotros!</p>
-        
+        <div class="invitation-text">
+            Querido(a) <span id="name-display" class="highlight-name">[Nombre]</span>,<br>
+            ¡Ven a celebrar con nosotros<br>mi primer año de vida!
+        </div>        
         <div class="animals">
             <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" class="animal" alt="Girafa" style="animation-delay: 0s;">
             <img src="https://cdn-icons-png.flaticon.com/512/616/616430.png" class="animal" alt="León" style="animation-delay: 0.2s;">
             <img src="https://cdn-icons-png.flaticon.com/512/3069/3069172.png" class="animal" alt="Tigre" style="animation-delay: 0.4s;">
             <img src="https://cdn-icons-png.flaticon.com/512/10983/10983479.png" class="animal" alt="Tortuga" style="animation-delay: 0.6s;">
+        </div>        
+        <div class="name-container">
+            <div class="name-label">Escribe tu nombre:</div>
+            <input type="text" id="nombre" class="name-input" placeholder="Tu nombre aquí">
         </div>
-        
-        <input type="text" id="nombre" placeholder="Escribe tu nombre">
     </div>
-
     <button id="download-gif" class="download-btn" onclick="generateGIF()">Generar Invitación (GIF)</button>
     <button id="download-mp4" class="download-btn" onclick="generateOptimizedMP4()">Generar Invitación (MP4)</button>
-
     <div class="loading-overlay" id="loading">
         <h2 id="loading-text">Preparando...</h2>
         <p id="progress-detail"></p>
@@ -202,7 +222,6 @@
             <div class="progress" id="progress-bar"></div>
         </div>
     </div>
-
     <script>
         // Crear estrellas animadas
         for (let i = 0; i < 60; i++) {
@@ -213,6 +232,14 @@
             star.style.animationDelay = `${Math.random() * 2}s`;
             document.body.appendChild(star);
         }
+
+        // Actualizar nombre en tiempo real
+        const nombreInput = document.getElementById('nombre');
+        const nameDisplay = document.getElementById('name-display');
+        
+        nombreInput.addEventListener('input', function() {
+            nameDisplay.textContent = this.value || '[Nombre]';
+        });
 
         // Función para mostrar/ocultar carga
         function showLoading(show, text = "", progress = 0) {
@@ -230,7 +257,7 @@
                 loading.style.display = 'none';
             }
         }
-
+        
         // Función para generar GIF
         async function generateGIF() {
             const nombre = document.getElementById('nombre').value;
@@ -238,7 +265,6 @@
                 alert("Por favor, escribe tu nombre");
                 return;
             }
-
             const btn = document.getElementById('download-gif');
             btn.disabled = true;
             showLoading(true, "Generando GIF...");
@@ -254,9 +280,7 @@
                     workerScript: 'scripts/gif.worker.js',
                     repeat: 0
                 });
-
-                const totalFrames = 12;
-                
+                const totalFrames = 12;                
                 for (let i = 0; i < totalFrames; i++) {
                     showLoading(true, `Generando GIF... (${i+1}/${totalFrames})`, (i/totalFrames)*100);
                     
@@ -269,9 +293,27 @@
                                 logging: false,
                                 useCORS: true,
                                 backgroundColor: null,
-                                ignoreElements: (el) => el.classList.contains('download-btn')
+                                ignoreElements: (el) => el.classList.contains('download-btn'),
+                                windowWidth: card.offsetWidth,
+                                windowHeight: card.offsetHeight,
+                                x: 0,
+                                y: 0
                             });
-                            gif.addFrame(canvas, { delay: 100 });
+                            
+                            // Centrar el canvas en el GIF
+                            const centeredCanvas = document.createElement('canvas');
+                            centeredCanvas.width = card.offsetWidth;
+                            centeredCanvas.height = card.offsetHeight;
+                            const ctx = centeredCanvas.getContext('2d');
+                            ctx.fillStyle = 'transparent';
+                            ctx.fillRect(0, 0, centeredCanvas.width, centeredCanvas.height);
+                            
+                            // Calcular posición centrada
+                            const x = (centeredCanvas.width - canvas.width) / 2;
+                            const y = (centeredCanvas.height - canvas.height) / 2;
+                            ctx.drawImage(canvas, x, y);
+                            
+                            gif.addFrame(centeredCanvas, { delay: 100 });
                             resolve();
                         }, 50);
                     });
@@ -301,7 +343,6 @@
                 alert("Por favor, escribe tu nombre");
                 return;
             }
-
             const btn = document.getElementById('download-mp4');
             btn.disabled = true;
             showLoading(true, "Preparando generador de video...");
@@ -320,14 +361,12 @@
                 if (!ffmpeg.isLoaded()) {
                     await ffmpeg.load();
                 }
-
                 // Niveles de calidad a probar
                 const qualityLevels = [
                     { scale: 0.5, frames: 10, fps: 8, quality: 0.5, label: "baja" },
                     { scale: 0.6, frames: 12, fps: 10, quality: 0.6, label: "media" },
                     { scale: 0.7, frames: 15, fps: 12, quality: 0.7, label: "alta" }
                 ];
-
                 let success = false;
                 
                 for (const level of qualityLevels) {
@@ -347,9 +386,26 @@
                                         logging: false,
                                         useCORS: true,
                                         backgroundColor: null,
-                                        ignoreElements: (el) => el.classList.contains('download-btn')
+                                        ignoreElements: (el) => el.classList.contains('download-btn'),
+                                        windowWidth: card.offsetWidth,
+                                        windowHeight: card.offsetHeight,
+                                        x: 0,
+                                        y: 0
                                     });
-                                    frames.push(canvas.toDataURL('image/jpeg', level.quality));
+                                    
+                                    // Centrar el frame
+                                    const centeredCanvas = document.createElement('canvas');
+                                    centeredCanvas.width = card.offsetWidth * level.scale;
+                                    centeredCanvas.height = card.offsetHeight * level.scale;
+                                    const ctx = centeredCanvas.getContext('2d');
+                                    ctx.fillStyle = 'transparent';
+                                    ctx.fillRect(0, 0, centeredCanvas.width, centeredCanvas.height);
+                                    
+                                    const x = (centeredCanvas.width - canvas.width) / 2;
+                                    const y = (centeredCanvas.height - canvas.height) / 2;
+                                    ctx.drawImage(canvas, x, y);
+                                    
+                                    frames.push(centeredCanvas.toDataURL('image/jpeg', level.quality));
                                     resolve();
                                 }, 50);
                             });
@@ -402,7 +458,6 @@
                         }
                     }
                 }
-
                 if (!success) {
                     throw new Error("No se pudo generar el video después de varios intentos");
                 }
