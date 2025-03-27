@@ -228,42 +228,7 @@
         </div>
     </div>
     <script>
-        // Crear estrellas animadas
-        for (let i = 0; i < 60; i++) {
-            const star = document.createElement('div');
-            star.classList.add('star');
-            star.style.left = `${Math.random() * 100}vw`;
-            star.style.top = `${Math.random() * 100}vh`;
-            star.style.animationDelay = `${Math.random() * 2}s`;
-            document.body.appendChild(star);
-        }
-
-        // Actualizar nombre en tiempo real
-        const nombreInput = document.getElementById('nombre');
-        const nameDisplay = document.getElementById('name-display');
-        
-        nombreInput.addEventListener('input', function() {
-            nameDisplay.textContent = this.value || '[Nombre]';
-        });
-
-        // Función para mostrar/ocultar carga
-        function showLoading(show, text = "", progress = 0) {
-            const loading = document.getElementById('loading');
-            const loadingText = document.getElementById('loading-text');
-            const progressDetail = document.getElementById('progress-detail');
-            const progressBar = document.getElementById('progress-bar');
-            
-            if (show) {
-                loading.style.display = 'flex';
-                loadingText.textContent = text || "Procesando...";
-                progressDetail.textContent = "";
-                progressBar.style.width = `${progress}%`;
-            } else {
-                loading.style.display = 'none';
-            }
-        }
-        
-        // Función para generar GIF con mayor calidad
+        // Función para generar GIF con mayor calidad y duración
         async function generateGIF() {
             const nombre = document.getElementById('nombre').value;
             if (!nombre) {
@@ -273,7 +238,7 @@
             const btn = document.getElementById('download-gif');
             btn.disabled = true;
             showLoading(true, "Generando GIF...");
-
+    
             try {
                 const card = document.getElementById('invitation-card');
                 
@@ -296,8 +261,9 @@
                     background: 'transparent'
                 });
                 
-                const totalFrames = 20; // Más frames para capturar mejor la animación
-                const frameDelay = 70; // Menor retardo para animación más fluida
+                const totalFrames = 30; // Aumenté a 30 frames (antes eran 20)
+                const frameDelay = 100; // Aumenté el delay para que dure más (antes era 70)
+                const captureInterval = 150; // Aumenté el intervalo entre capturas (antes era 100)
                 
                 for (let i = 0; i < totalFrames; i++) {
                     showLoading(true, `Generando GIF... (${i+1}/${totalFrames})`, (i/totalFrames)*100);
@@ -336,9 +302,9 @@
                             resolve();
                         }, 50);
                     });
-                    await new Promise(r => setTimeout(r, 100)); // Menor espera entre frames
+                    await new Promise(r => setTimeout(r, captureInterval));
                 }
-
+    
                 gif.on('finished', blob => {
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
@@ -348,153 +314,13 @@
                     // Mostrar nuevamente los elementos ocultos
                     document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
                 }).render();
-
+    
             } catch (error) {
                 console.error("Error al generar GIF:", error);
                 alert("Ocurrió un error al generar el GIF. Intenta de nuevo.");
                 // Asegurarse de mostrar los elementos ocultos incluso si hay error
                 document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
             } finally {
-                btn.disabled = false;
-                showLoading(false);
-            }
-        }
-
-        // Función optimizada para generar MP4
-        async function generateOptimizedMP4() {
-            const nombre = document.getElementById('nombre').value;
-            if (!nombre) {
-                alert("Por favor, escribe tu nombre");
-                return;
-            }
-            const btn = document.getElementById('download-mp4');
-            btn.disabled = true;
-            showLoading(true, "Preparando generador de video...");
-
-            try {
-                const card = document.getElementById('invitation-card');
-                const { createFFmpeg, fetchFile } = FFmpeg;
-                
-                // Ocultar elementos que no deben exportarse
-                document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
-                
-                // Configuración de FFmpeg
-                const ffmpeg = createFFmpeg({ 
-                    log: true,
-                    corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
-                });
-
-                showLoading(true, "Cargando FFmpeg...");
-                if (!ffmpeg.isLoaded()) {
-                    await ffmpeg.load();
-                }
-                // Niveles de calidad a probar
-                const qualityLevels = [
-                    { scale: 1.5, frames: 15, fps: 12, quality: 0.8, label: "alta" },
-                    { scale: 1.2, frames: 12, fps: 10, quality: 0.7, label: "media" },
-                    { scale: 1.0, frames: 10, fps: 8, quality: 0.6, label: "baja" }
-                ];
-                let success = false;
-                
-                for (const level of qualityLevels) {
-                    try {
-                        showLoading(true, `Intentando con calidad ${level.label}...`);
-                        
-                        // 1. Capturar frames
-                        const frames = [];
-                        for(let i = 0; i < level.frames; i++) {
-                            showLoading(true, `Capturando frame ${i+1}/${level.frames}`, (i/level.frames)*50);
-                            
-                            await new Promise(resolve => {
-                                void card.offsetWidth;
-                                setTimeout(async () => {
-                                    const canvas = await html2canvas(card, {
-                                        scale: level.scale,
-                                        logging: false,
-                                        useCORS: true,
-                                        backgroundColor: null,
-                                        ignoreElements: (el) => el.classList.contains('download-btn') || el.classList.contains('no-export'),
-                                        windowWidth: card.offsetWidth,
-                                        windowHeight: card.offsetHeight,
-                                        x: 0,
-                                        y: 0
-                                    });
-                                    
-                                    // Centrar el frame
-                                    const centeredCanvas = document.createElement('canvas');
-                                    centeredCanvas.width = card.offsetWidth * level.scale;
-                                    centeredCanvas.height = card.offsetHeight * level.scale;
-                                    const ctx = centeredCanvas.getContext('2d');
-                                    ctx.fillStyle = 'transparent';
-                                    ctx.fillRect(0, 0, centeredCanvas.width, centeredCanvas.height);
-                                    
-                                    const x = (centeredCanvas.width - canvas.width) / 2;
-                                    const y = (centeredCanvas.height - canvas.height) / 2;
-                                    ctx.drawImage(canvas, x, y);
-                                    
-                                    frames.push(centeredCanvas.toDataURL('image/jpeg', level.quality));
-                                    resolve();
-                                }, 50);
-                            });
-                            await new Promise(r => setTimeout(r, 200));
-                        }
-
-                        // 2. Procesar frames
-                        for (let i = 0; i < frames.length; i++) {
-                            showLoading(true, `Procesando frame ${i+1}/${frames.length}`, 50 + (i/frames.length)*25);
-                            const frameData = await fetchFile(frames[i]);
-                            ffmpeg.FS('writeFile', `frame${i.toString().padStart(3, '0')}.jpg`, frameData);
-                        }
-
-                        // 3. Generar MP4
-                        showLoading(true, "Codificando video...", 75);
-                        await ffmpeg.run(
-                            '-framerate', level.fps.toString(),
-                            '-i', 'frame%03d.jpg',
-                            '-c:v', 'libx264',
-                            '-pix_fmt', 'yuv420p',
-                            '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
-                            '-preset', 'ultrafast',
-                            '-crf', '28', // Menor compresión para mejor calidad
-                            '-fs', '2M', // Mayor tamaño permitido
-                            '-y',
-                            'output.mp4'
-                        );
-
-                        // 4. Verificar y descargar
-                        showLoading(true, "Finalizando...", 95);
-                        const data = ffmpeg.FS('readFile', 'output.mp4');
-                        const blob = new Blob([data.buffer], { type: 'video/mp4' });
-                        
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `Invitacion_${nombre}.mp4`;
-                        a.click();
-
-                        success = true;
-                        break;
-
-                    } catch (error) {
-                        console.warn(`Error con calidad ${level.label}:`, error);
-                        // Limpiar para el siguiente intento
-                        for (let i = 0; i < level.frames; i++) {
-                            try {
-                                ffmpeg.FS('unlink', `frame${i.toString().padStart(3, '0')}.jpg`);
-                            } catch (e) {}
-                        }
-                    }
-                }
-                if (!success) {
-                    throw new Error("No se pudo generar el video después de varios intentos");
-                }
-
-            } catch (error) {
-                console.error("Error al generar MP4:", error);
-                alert("No se pudo generar el video MP4. Intenta en otro dispositivo o reduce la complejidad de la animación.");
-            } finally {
-                // Mostrar nuevamente los elementos ocultos
-                document.querySelectorAll('.no-export').forEach(el => el.style.display = '');
                 btn.disabled = false;
                 showLoading(false);
             }
