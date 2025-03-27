@@ -31,43 +31,33 @@
         }
         .card {
             background: rgba(255, 255, 255, 0.9);
-            padding: 25px;
+            padding: 30px;
             border-radius: 20px;
             text-align: center;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            width: 300px;
+            width: 350px;
             position: relative;
             z-index: 1;
         }
         h1 {
-            font-size: 2em;
+            font-size: 2.2em;
             color: #ff6f61;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             animation: pulse 1.2s infinite alternate;
         }
         @keyframes pulse {
             0% { transform: scale(1); }
             100% { transform: scale(1.08); }
         }
-        p {
-            font-size: 1.1em;
-            color: #555;
-            margin-bottom: 15px;
-            animation: floatText 2.5s ease-in-out infinite;
-        }
-        @keyframes floatText {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
         .animals {
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin: 20px 0;
+            margin: 25px 0;
         }
         .animal {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
             animation: float 2.5s ease-in-out infinite;
             filter: drop-shadow(0 8px 5px rgba(0,0,0,0.2));
         }
@@ -182,10 +172,10 @@
         }
         .invitation-text {
             font-family: 'Brush Script MT', cursive;
-            font-size: 1.2em;
+            font-size: 1.3em;
             color: #555;
-            line-height: 1.5;
-            margin-bottom: 15px;
+            line-height: 1.6;
+            margin-bottom: 20px;
         }
         .highlight-name {
             color: #ff6f61;
@@ -203,7 +193,8 @@
         <h1>¡Estás Invitado!</h1>
         <div class="invitation-text">
             Querido(a) <span id="name-display" class="highlight-name">[Nombre]</span>,<br>
-            ¡Ven a celebrar con nosotros<br>mi primer año de vida!
+            ¡Ven a celebrar con nosotros<br>mi primer año de vida!<br>
+            El día 2 de Abril de 2025<br>a las 4 PM<br>en mi jardín de juegos
         </div>        
         <div class="animals">
             <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" class="animal" alt="Girafa" style="animation-delay: 0s;">
@@ -261,7 +252,7 @@
             }
         }
         
-        // Función para generar GIF
+        // Función para generar GIF con mayor calidad
         async function generateGIF() {
             const nombre = document.getElementById('nombre').value;
             if (!nombre) {
@@ -278,38 +269,49 @@
                 // Ocultar elementos que no deben exportarse
                 document.querySelectorAll('.no-export').forEach(el => el.style.display = 'none');
                 
+                // Configuración para GIF de alta calidad
+                const scaleFactor = 2; // Factor de escala para mayor resolución
+                const cardWidth = card.offsetWidth;
+                const cardHeight = card.offsetHeight;
+                
                 const gif = new GIF({
-                    workers: 2,
-                    quality: 10,
-                    width: card.offsetWidth,
-                    height: card.offsetHeight,
+                    workers: 4, // Más workers para mejor rendimiento
+                    quality: 20, // Máxima calidad (rango 1-20)
+                    width: cardWidth * scaleFactor,
+                    height: cardHeight * scaleFactor,
                     workerScript: 'scripts/gif.worker.js',
-                    repeat: 0
+                    repeat: 0,
+                    dither: false, // Mejor calidad sin difuminado
+                    background: 'transparent'
                 });
-                const totalFrames = 12;                
+                
+                const totalFrames = 15; // Más frames para animación más suave
+                const frameDelay = 80; // Retardo entre frames en ms
+                
                 for (let i = 0; i < totalFrames; i++) {
                     showLoading(true, `Generando GIF... (${i+1}/${totalFrames})`, (i/totalFrames)*100);
                     
                     await new Promise(resolve => {
-                        void card.offsetWidth;
+                        void card.offsetWidth; // Forzar reflow para capturar animación
                         
                         setTimeout(async () => {
+                            // Capturar con mayor resolución
                             const canvas = await html2canvas(card, {
-                                scale: 0.7,
+                                scale: scaleFactor,
                                 logging: false,
                                 useCORS: true,
                                 backgroundColor: null,
                                 ignoreElements: (el) => el.classList.contains('download-btn') || el.classList.contains('no-export'),
-                                windowWidth: card.offsetWidth,
-                                windowHeight: card.offsetHeight,
+                                windowWidth: cardWidth,
+                                windowHeight: cardHeight,
                                 x: 0,
                                 y: 0
                             });
                             
                             // Centrar el canvas en el GIF
                             const centeredCanvas = document.createElement('canvas');
-                            centeredCanvas.width = card.offsetWidth;
-                            centeredCanvas.height = card.offsetHeight;
+                            centeredCanvas.width = cardWidth * scaleFactor;
+                            centeredCanvas.height = cardHeight * scaleFactor;
                             const ctx = centeredCanvas.getContext('2d');
                             ctx.fillStyle = 'transparent';
                             ctx.fillRect(0, 0, centeredCanvas.width, centeredCanvas.height);
@@ -319,7 +321,7 @@
                             const y = (centeredCanvas.height - canvas.height) / 2;
                             ctx.drawImage(canvas, x, y);
                             
-                            gif.addFrame(centeredCanvas, { delay: 100 });
+                            gif.addFrame(centeredCanvas, { delay: frameDelay });
                             resolve();
                         }, 50);
                     });
@@ -377,9 +379,9 @@
                 }
                 // Niveles de calidad a probar
                 const qualityLevels = [
-                    { scale: 0.5, frames: 10, fps: 8, quality: 0.5, label: "baja" },
-                    { scale: 0.6, frames: 12, fps: 10, quality: 0.6, label: "media" },
-                    { scale: 0.7, frames: 15, fps: 12, quality: 0.7, label: "alta" }
+                    { scale: 1.5, frames: 15, fps: 12, quality: 0.8, label: "alta" },
+                    { scale: 1.2, frames: 12, fps: 10, quality: 0.7, label: "media" },
+                    { scale: 1.0, frames: 10, fps: 8, quality: 0.6, label: "baja" }
                 ];
                 let success = false;
                 
@@ -442,8 +444,8 @@
                             '-pix_fmt', 'yuv420p',
                             '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
                             '-preset', 'ultrafast',
-                            '-crf', '30',
-                            '-fs', '1.5M',
+                            '-crf', '28', // Menor compresión para mejor calidad
+                            '-fs', '2M', // Mayor tamaño permitido
                             '-y',
                             'output.mp4'
                         );
